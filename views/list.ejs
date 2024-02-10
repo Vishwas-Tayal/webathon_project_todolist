@@ -1,0 +1,64 @@
+<%- include("header") -%>
+
+<div class="box" id="heading">
+    <h1><%= listTitle %></h1>
+</div>
+
+<div class="box" id="tasks">
+    <% newListItems.forEach(function(item) { %>
+        <div class="item" draggable="true" id="<%= item._id %>">
+            <form action="/delete" method="post">
+                <input type="checkbox" name="checkbox" value="<%= item._id %>" onchange="this.form.submit()">
+                <p><%= item.name %></p>
+                <input type="hidden" name="listName" value="<%= listTitle %>">
+            </form>
+        </div>
+    <% }) %>
+</div>
+
+<form class="item" action="/" method="post">
+    <input type="text" name="newItem" placeholder="New Item" autocomplete="off">
+    <button type="submit" name="list" value="<%= listTitle %>">+</button>
+</form>
+
+<%- include("footer") -%>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const tasksContainer = document.getElementById('tasks');
+
+        tasksContainer.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', e.target.id);
+            e.target.classList.add('dragging');
+        });
+
+        tasksContainer.addEventListener('dragend', (e) => {
+            e.target.classList.remove('dragging');
+        });
+
+        tasksContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(tasksContainer, e.clientY);
+            const draggedTask = document.querySelector('.dragging');
+            if (afterElement == null) {
+                tasksContainer.appendChild(draggedTask);
+            } else {
+                tasksContainer.insertBefore(draggedTask, afterElement);
+            }
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+    });
+</script>
+
